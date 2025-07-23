@@ -1,23 +1,17 @@
-import { useState } from "react"
+'use client'
+import { useRouter } from "next/navigation";
 
 export const EntryComponents = () => {
-  const [importValue, setImport] = useState<string>("");  
+  const router = useRouter();
 
-  function selectDropDownValue(event: React.ChangeEvent<HTMLSelectElement>) {
-    if (event.target.value !== "") {
-      setImport(event.target.value);
-    }
-    else {
-    }
-  }
   return (
     <div className=""> 
-      <select className="" value={importValue} onChange={selectDropDownValue}>
-        <option className="" value="">Import</option>
+      <select className="" onChange={e => {if (e.target.value == "SeedPhraseImport") router.push(`/seed-input/SeedPhraseImport`)}}>
+        <option className="" value="">Import private key or seed phrase</option>
         <option className="" value="PrivateKey" >private key</option>
-        <option className="SeedPhrase">Seed Phrase</option>
+        <option className="" value="SeedPhraseImport">Seed Phrase</option>
       </select>
-      <button className="">Crate Wallet</button>
+      <button className="" onClick={() => router.push(`/seed-input/SeedPhraseCreate`)}>Create Wallet</button>
     </div>
   )
 }
