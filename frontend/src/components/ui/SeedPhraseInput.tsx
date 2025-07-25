@@ -1,10 +1,11 @@
 'use client'
 import * as bip39 from "bip39"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
   const [typeOfSeedPhraseOperation, setTypeOfSeedPhraseOperation] = useState<string>("");  
   const [numberOfSeed, setNumberOfSeed] = useState<number>(12);
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([])
 
   const handleToggle = () => {
     if (numberOfSeed == 12) {
@@ -17,12 +18,19 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     }
   };
 
-  const generateInputField = (numberofseed: number) => {
-    const result = [];
-    for(let i = 0; i < numberofseed; i++) {
-      result.push(<input key={i} id={String(i)} type="text">Item {i}</input>);
+  
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    const words = text.trim().split(/\s+/); // split by spasi atau enter
+
+    if (words.length === 12) {
+      words.forEach((word, idx) => {
+        if (inputsRef.current[idx]) {
+          inputsRef.current[idx]!.value = word;
+        }
+      });
+      e.preventDefault();
     }
-      return result;
   };
 
   function handleInputSeed () {
@@ -40,9 +48,11 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
   
   return (
     <div>
-    <div>
-    {numberOfSeed == 12 ? 
-    }
+    <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
+    { numberOfSeed ? Array.from({length : numberOfSeed}).map((_, i) => (
+      <input className="border-black-50" key={i} id={String(i)} type="text" placeholder={"Seed #" + i} onPaste={i <= numberOfSeed ? handlePaste : undefined} 
+          ref={(el) => {inputsRef.current[i] = el}}></input>
+    )) : <span>Input Kosong</span>}
     </div>
     
     <div>
