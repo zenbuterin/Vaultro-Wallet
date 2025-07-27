@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
   const [typeOfSeedPhraseOperation, setTypeOfSeedPhraseOperation] = useState<string>("");  
   const [numberOfSeed, setNumberOfSeed] = useState<number>(12);
+  const [seedWords, setSeedWords] = useState<(string)[]>([])
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
 
   function handleToggle() {
@@ -18,6 +19,8 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     }
   };
 
+
+
   function numberSeedToEntropy(numberofseed: number): number  {
     if (numberOfSeed == 12) {
       return 128;
@@ -28,33 +31,23 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     return 0
   }
 
-  function handleCreateSeedPhrase(numberofseed: number): React.ReactNode {
+  function handleCreateSeedPhrase(numberofseed: number): string[] {
     const entropy = numberSeedToEntropy(numberofseed)
     const seedPhrase = bip39.generateMnemonic(entropy);
     const words = seedPhrase.trim().split(/\s+/);
-
-    if (words.length === numberofseed) {
-      return (
-        <>
-          {words.map((word, index) => (
-            <div key={index}>
-              <span>{word}</span>
-            </div>
-          ))}
-        </>
-      );
-    }
-
-  // Jika kondisi tidak terpenuhi, return sesuatu agar tidak undefined
-  return null;
-}
+    //put seedphrase to state
+    setSeedWords(words)
+    return words;
+   
+  }
 
 
   function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
     const text = e.clipboardData.getData("text");
     const words = text.trim().split(/\s+/); // split by spasi atau enter
+    //put seedphrase to state
 
-    if (words.length === 12) {
+    if (words.length === 12 || words.length === 24) {
       words.forEach((word, idx) => {
         if (inputsRef.current[idx]) {
           inputsRef.current[idx]!.value = word;
@@ -74,13 +67,30 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
   } 
   
   useEffect( () => handleTypeOfInputSeed(), []);
+
+  useEffect(() => {
+    if (typeOfSeedPhraseOperation == "SeedPhraseCreate") { 
+      handleCreateSeedPhrase(numberOfSeed)
+    } 
+  }, [numberOfSeed])
+
+  useEffect(() => {
+    if (typeOfSeedPhraseOperation == "SeedPhraseImport") {
+      const words = inputsRef.current.map((input) => input?.value || "");
+      setSeedWords(words)
+    }
+  } , [seedWords])
+
+
+
+    
   
   return (
     <div>
     <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
     {/*ini untuk seed phrase yang di import*/}
     {
-    typeOfSeedPhraseOperation === "SeedPhraseImport" && numberOfSeed
+    typeOfSeedPhraseOperation === "SeedPhraseImport"
        ? Array.from({ length: numberOfSeed }).map((_, i) => (
           <input
             className="border-black-50"
@@ -92,16 +102,14 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
             ref={(el) => { inputsRef.current[i] = el }}
             />
           ))
-        : typeOfSeedPhraseOperation === "SeedPhraseCreate" && numberOfSeed
-        ? handleCreateSeedPhrase(numberOfSeed)
-        : <span>Input Kosong</span>
+        : typeOfSeedPhraseOperation === "SeedPhraseCreate" && 
+          seedWords.map((word, indx) => (
+          <div key={indx}><span>{word}</span></div>
+        ))  
      }
-    
     </div>
-    
     <div>
          <span className="text-gray-600 font-medium">12 Seed</span>
-          
           <button
             onClick={handleToggle}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
@@ -119,4 +127,4 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     </div>
     </div>
   )
-}
+  }
