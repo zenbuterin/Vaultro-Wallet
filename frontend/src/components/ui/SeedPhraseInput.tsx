@@ -7,7 +7,7 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
   const [numberOfSeed, setNumberOfSeed] = useState<number>(12);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
 
-  const handleToggle = () => {
+  function handleToggle() {
     if (numberOfSeed == 12) {
       setNumberOfSeed(24)
       console.log("number of seed 24")
@@ -18,8 +18,39 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     }
   };
 
-  
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  function numberSeedToEntropy(numberofseed: number): number  {
+    if (numberOfSeed == 12) {
+      return 128;
+    }
+    else if (numberofseed == 24) {
+      return 256;
+    }
+    return 0
+  }
+
+  function handleCreateSeedPhrase(numberofseed: number): React.ReactNode {
+    const entropy = numberSeedToEntropy(numberofseed)
+    const seedPhrase = bip39.generateMnemonic(entropy);
+    const words = seedPhrase.trim().split(/\s+/);
+
+    if (words.length === numberofseed) {
+      return (
+        <>
+          {words.map((word, index) => (
+            <div key={index}>
+              <span>{word}</span>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+  // Jika kondisi tidak terpenuhi, return sesuatu agar tidak undefined
+  return null;
+}
+
+
+  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
     const text = e.clipboardData.getData("text");
     const words = text.trim().split(/\s+/); // split by spasi atau enter
 
@@ -33,26 +64,39 @@ export const SeedPhraseInput = ({ typeSeed }: {typeSeed : string}) => {
     }
   };
 
-  function handleInputSeed () {
+  function handleTypeOfInputSeed () {
     if (typeSeed == "SeedPhraseImport") {
-      setTypeOfSeedPhraseOperation("SeedPhraseImport");
-
-      
+      setTypeOfSeedPhraseOperation("SeedPhraseImport"); 
     }
     else if (typeSeed == "SeedPhraseCreate") {
       setTypeOfSeedPhraseOperation("SeedPhraseCreate");
     }
   } 
   
-  useEffect( () => handleInputSeed(), []);
+  useEffect( () => handleTypeOfInputSeed(), []);
   
   return (
     <div>
     <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
-    { numberOfSeed ? Array.from({length : numberOfSeed}).map((_, i) => (
-      <input className="border-black-50" key={i} id={String(i)} type="text" placeholder={"Seed #" + i} onPaste={i <= numberOfSeed ? handlePaste : undefined} 
-          ref={(el) => {inputsRef.current[i] = el}}></input>
-    )) : <span>Input Kosong</span>}
+    {/*ini untuk seed phrase yang di import*/}
+    {
+    typeOfSeedPhraseOperation === "SeedPhraseImport" && numberOfSeed
+       ? Array.from({ length: numberOfSeed }).map((_, i) => (
+          <input
+            className="border-black-50"
+            key={i}
+            id={String(i)}
+            type="text"
+            placeholder={"Seed #" + i}
+            onPaste={i <= numberOfSeed ? handlePaste : undefined}
+            ref={(el) => { inputsRef.current[i] = el }}
+            />
+          ))
+        : typeOfSeedPhraseOperation === "SeedPhraseCreate" && numberOfSeed
+        ? handleCreateSeedPhrase(numberOfSeed)
+        : <span>Input Kosong</span>
+     }
+    
     </div>
     
     <div>
